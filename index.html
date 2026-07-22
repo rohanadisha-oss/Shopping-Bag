@@ -79,7 +79,19 @@
             color: #94a3b8;
         }
 
-        /* Input Area */
+        /* Input Area & Shop Name Field */
+        input[type="text"] {
+            width: 100%;
+            background-color: #020617;
+            color: #ffffff;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 15px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+
         textarea {
             width: 100%;
             height: 90px;
@@ -259,9 +271,12 @@
         <!-- Section 1: Input Box Card -->
         <div class="card" id="input-card">
             <div class="card-header">
-                <span class="card-title">1. Write Items (Bengali / English)</span>
+                <span class="card-title">1. Enter Details (Shop Name & Items)</span>
                 <button class="btn-link" onclick="clearInput()">Clear</button>
             </div>
+            <!-- Shop Name Input Field -->
+            <input type="text" id="shop-name-input" placeholder="দোকানের নাম লিখুন (e.g. জনতা স্টোর)">
+            
             <textarea id="text-input" placeholder="চাল (৫ কেজি)&#10;দুধ (১ লিটার)&#10;ডিম (১২ টি)"></textarea>
             <button class="btn-primary" onclick="createList()">Create List &rarr;</button>
         </div>
@@ -282,7 +297,7 @@
 
         <!-- Hidden Invoice Rendered for Printing -->
         <div id="printable-receipt">
-            <h2>Official Receipt</h2>
+            <h2 id="receipt-shop-name">Official Receipt</h2>
             <div class="receipt-date" id="receipt-date"></div>
             <table class="receipt-table">
                 <thead>
@@ -313,6 +328,7 @@
         const currentDateStr = updateDateTime();
 
         function clearInput() {
+            document.getElementById('shop-name-input').value = '';
             document.getElementById('text-input').value = '';
         }
 
@@ -386,6 +402,10 @@
                 alert("No items selected!");
                 return;
             }
+
+            // Set Manual Shop Name or Default Title
+            const shopName = document.getElementById('shop-name-input').value.trim();
+            document.getElementById('receipt-shop-name').innerText = shopName ? shopName : "Official Receipt";
 
             document.getElementById('receipt-date').innerText = "Date: " + currentDateStr;
             document.getElementById('receipt-total-price').innerText = "Rs. " + total.toFixed(2);

@@ -1,376 +1,398 @@
-import datetime
-import os
-import subprocess
-import tkinter as tk
-from tkinter import messagebox
-
-# ReportLab Imports for Professional PDF Generation
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
-
-
-class PDFShoppingApp:
-
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Shopping List to PDF")
-        self.root.geometry("420x750")
-
-        self.COLORS = {
-            "bg": "#0f172a",
-            "card_bg": "#1e293b",
-            "text": "#ffffff",
-            "subtext": "#94a3b8",
-            "primary": "#3b82f6",
-            "accent": "#10b981",
-            "danger": "#f43f5e",
-            "input_bg": "#020617",
-            "border": "#334155",
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shopping List & Bill Generator</title>
+    <style>
+        /* Modern Dark Theme Styling */
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
         }
 
-        self.root.configure(bg=self.COLORS["bg"])
-        self.items_data = []
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
 
-        self._build_ui()
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background-color: #0f172a;
+        }
 
-    def _build_ui(self):
-        # Header
-        header_frame = tk.Frame(self.root, bg=self.COLORS["bg"], pady=12)
-        header_frame.pack(fill="x", padx=16)
+        /* Header */
+        .header {
+            margin-bottom: 20px;
+        }
 
-        title = tk.Label(
-            header_frame,
-            text="Smart Shopping List",
-            font=("sans-serif", 18, "bold"),
-            fg=self.COLORS["text"],
-            bg=self.COLORS["bg"],
-            anchor="w",
-        )
-        title.pack(fill="x")
+        .header h1 {
+            font-size: 22px;
+            color: #ffffff;
+        }
 
-        now = datetime.datetime.now()
-        self.date_str = now.strftime("%d %b %Y | %I:%M %p")
+        .header .date-time {
+            font-size: 13px;
+            color: #3b82f6;
+            font-weight: 600;
+            margin-top: 4px;
+        }
 
-        lbl_date = tk.Label(
-            header_frame,
-            text=f"Date: {self.date_str}",
-            font=("sans-serif", 10),
-            fg=self.COLORS["primary"],
-            bg=self.COLORS["bg"],
-            anchor="w",
-        )
-        lbl_date.pack(fill="x", pady=(2, 0))
+        /* Card Section */
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
 
-        # Input Card
-        self.card_input = tk.Frame(
-            self.root,
-            bg=self.COLORS["card_bg"],
-            bd=1,
-            relief="flat",
-            highlightthickness=1,
-            highlightbackground=self.COLORS["border"],
-        )
-        self.card_input.pack(fill="x", padx=16, pady=(0, 10))
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
 
-        c1_top = tk.Frame(self.card_input, bg=self.COLORS["card_bg"])
-        c1_top.pack(fill="x", padx=12, pady=(10, 5))
+        .card-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #3b82f6;
+        }
 
-        lbl1 = tk.Label(
-            c1_top,
-            text="1. Write Items (one per line)",
-            font=("sans-serif", 11, "bold"),
-            fg=self.COLORS["primary"],
-            bg=self.COLORS["card_bg"],
-        )
-        lbl1.pack(side="left")
+        .btn-link {
+            background: none;
+            border: none;
+            color: #f43f5e;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
 
-        btn_clear = tk.Button(
-            c1_top,
-            text="Clear",
-            font=("sans-serif", 9, "bold"),
-            fg=self.COLORS["danger"],
-            bg=self.COLORS["card_bg"],
-            bd=0,
-            command=lambda: self.txt_input.delete("1.0", tk.END),
-        )
-        btn_clear.pack(side="right")
+        .btn-edit {
+            color: #94a3b8;
+        }
 
-        self.txt_input = tk.Text(
-            self.card_input,
-            height=4,
-            font=("sans-serif", 12),
-            bg=self.COLORS["input_bg"],
-            fg=self.COLORS["text"],
-            insertbackground="white",
-            bd=0,
-            padx=10,
-            pady=8,
-            wrap="word",
-        )
-        self.txt_input.pack(fill="x", padx=12, pady=(0, 10))
-        self.txt_input.insert("1.0", "Rice (5 kg)\nMilk (1 Liter)\nEggs (12 Pcs)")
+        /* Input Area */
+        textarea {
+            width: 100%;
+            height: 90px;
+            background-color: #020617;
+            color: #ffffff;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 15px;
+            resize: none;
+            margin-bottom: 12px;
+            outline: none;
+        }
 
-        btn_submit = tk.Button(
-            self.card_input,
-            text="Create List  -->",
-            font=("sans-serif", 11, "bold"),
-            bg=self.COLORS["primary"],
-            fg="white",
-            bd=0,
-            pady=8,
-            command=self.lock_and_build_list,
-        )
-        btn_submit.pack(fill="x", padx=12, pady=(0, 12))
+        /* Primary Action Button */
+        .btn-primary {
+            width: 100%;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
 
-        # Selection Card
-        self.card_list = tk.Frame(
-            self.root,
-            bg=self.COLORS["card_bg"],
-            bd=1,
-            relief="flat",
-            highlightthickness=1,
-            highlightbackground=self.COLORS["border"],
-        )
-        self.card_list.pack(fill="both", expand=True, padx=16, pady=(0, 10))
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
 
-        c2_top = tk.Frame(self.card_list, bg=self.COLORS["card_bg"])
-        c2_top.pack(fill="x", padx=12, pady=(10, 5))
+        .btn-success {
+            background-color: #10b981;
+        }
 
-        lbl2 = tk.Label(
-            c2_top,
-            text="2. Select & Enter Prices",
-            font=("sans-serif", 11, "bold"),
-            fg=self.COLORS["primary"],
-            bg=self.COLORS["card_bg"],
-        )
-        lbl2.pack(side="left")
+        .btn-success:hover {
+            background-color: #059669;
+        }
 
-        self.btn_edit = tk.Button(
-            c2_top,
-            text="[Edit Items]",
-            font=("sans-serif", 9, "bold"),
-            fg=self.COLORS["subtext"],
-            bg=self.COLORS["card_bg"],
-            bd=0,
-            command=self.show_input_card,
-        )
+        /* Dynamic Item List */
+        .item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #0f172a;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
 
-        self.items_container = tk.Frame(
-            self.card_list, bg=self.COLORS["card_bg"]
-        )
-        self.items_container.pack(fill="both", expand=True, padx=12, pady=5)
+        .item-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
 
-        # PDF Export Button
-        self.btn_pdf = tk.Button(
-            self.root,
-            text="📄 Generate & Download PDF Bill",
-            font=("sans-serif", 12, "bold"),
-            bg=self.COLORS["accent"],
-            fg="white",
-            bd=0,
-            pady=12,
-            command=self.generate_pdf_invoice,
-        )
-        self.btn_pdf.pack(fill="x", padx=16, pady=(0, 16))
+        .item-left input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #10b981;
+            cursor: pointer;
+        }
 
-        self.lock_and_build_list()
+        .item-left label {
+            font-size: 15px;
+            cursor: pointer;
+            color: #f8fafc;
+        }
 
-    def show_input_card(self):
-        self.card_input.pack(
-            fill="x", padx=16, pady=(0, 10), before=self.card_list
-        )
-        self.btn_edit.pack_forget()
+        .price-container {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-    def lock_and_build_list(self):
-        raw_text = self.txt_input.get("1.0", tk.END).strip()
-        lines = [line.strip() for line in raw_text.split("\n") if line.strip()]
+        .price-container span {
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: bold;
+        }
 
-        if not lines:
-            messagebox.showwarning("Warning", "Please write at least one item!")
-            return
+        .price-input {
+            width: 70px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: #10b981;
+            font-weight: bold;
+            text-align: center;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
 
-        self.card_input.pack_forget()
-        self.btn_edit.pack(side="right")
+        /* Printable Receipt (Hidden by Default) */
+        #printable-receipt {
+            display: none;
+            background: #ffffff;
+            color: #0f172a;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            margin: 20px auto;
+        }
 
-        for widget in self.items_container.winfo_children():
-            widget.destroy()
+        #printable-receipt h2 {
+            text-align: center;
+            font-size: 20px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
 
-        self.items_data = []
+        #printable-receipt .receipt-date {
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            margin: 8px 0 16px 0;
+        }
 
-        for line in lines:
-            row_frame = tk.Frame(
-                self.items_container, bg=self.COLORS["card_bg"], pady=4
-            )
-            row_frame.pack(fill="x")
+        .receipt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
 
-            var_check = tk.BooleanVar(value=True)
+        .receipt-table th, .receipt-table td {
+            padding: 8px 0;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
 
-            cb = tk.Checkbutton(
-                row_frame,
-                text=line,
-                variable=var_check,
-                font=("sans-serif", 12),
-                fg=self.COLORS["text"],
-                bg=self.COLORS["card_bg"],
-                selectcolor=self.COLORS["input_bg"],
-                anchor="w",
-            )
-            cb.pack(side="left", fill="x", expand=True)
+        .receipt-table th:last-child, .receipt-table td:last-child {
+            text-align: right;
+        }
 
-            lbl_currency = tk.Label(
-                row_frame,
-                text="Rs.",
-                font=("sans-serif", 10, "bold"),
-                fg=self.COLORS["subtext"],
-                bg=self.COLORS["card_bg"],
-            )
-            lbl_currency.pack(side="left", padx=(5, 2))
+        .receipt-total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 2px solid #0f172a;
+            padding-top: 10px;
+            color: #10b981;
+        }
 
-            price_entry = tk.Entry(
-                row_frame,
-                width=7,
-                font=("sans-serif", 11, "bold"),
-                bg=self.COLORS["input_bg"],
-                fg=self.COLORS["accent"],
-                insertbackground="white",
-                bd=1,
-                relief="solid",
-                justify="center",
-            )
-            price_entry.pack(side="right", padx=(0, 5))
-            price_entry.insert(0, "0")
+        /* Media Query for Browser Printing */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-receipt, #printable-receipt * {
+                visibility: visible;
+            }
+            #printable-receipt {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
 
-            self.items_data.append(
-                {
-                    "name": line,
-                    "selected": var_check,
-                    "price_entry": price_entry,
+    <div class="app-container">
+        <!-- App Header -->
+        <div class="header">
+            <h1>Smart Shopping List</h1>
+            <div class="date-time" id="live-date-time">Loading date...</div>
+        </div>
+
+        <!-- Section 1: Input Box Card -->
+        <div class="card" id="input-card">
+            <div class="card-header">
+                <span class="card-title">1. Write Items (Bengali / English)</span>
+                <button class="btn-link" onclick="clearInput()">Clear</button>
+            </div>
+            <textarea id="text-input" placeholder="চাল (৫ কেজি)&#10;দুধ (১ লিটার)&#10;ডিম (১২ টি)"></textarea>
+            <button class="btn-primary" onclick="createList()">Create List &rarr;</button>
+        </div>
+
+        <!-- Section 2: Checkboxes and Price Card -->
+        <div class="card" id="list-card" style="display: none;">
+            <div class="card-header">
+                <span class="card-title">2. Select & Enter Prices</span>
+                <button class="btn-link btn-edit" onclick="showInputCard()">[Edit Items]</button>
+            </div>
+            <div id="items-container"></div>
+        </div>
+
+        <!-- Generate Bill Button -->
+        <button class="btn-primary btn-success" id="btn-generate" style="display: none;" onclick="generateBill()">
+            Generate & Download PDF Bill
+        </button>
+
+        <!-- Hidden Invoice Rendered for Printing -->
+        <div id="printable-receipt">
+            <h2>Official Receipt</h2>
+            <div class="receipt-date" id="receipt-date"></div>
+            <table class="receipt-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody id="receipt-body"></tbody>
+            </table>
+            <div class="receipt-total">
+                <span>TOTAL AMOUNT:</span>
+                <span id="receipt-total-price">Rs. 0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set Auto Date and Time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
+            const formattedDate = now.toLocaleString('en-US', options).replace(',', ' |');
+            document.getElementById('live-date-time').innerText = "Date: " + formattedDate;
+            return formattedDate;
+        }
+        
+        const currentDateStr = updateDateTime();
+
+        function clearInput() {
+            document.getElementById('text-input').value = '';
+        }
+
+        // Lock text box and convert lines to interactive list
+        function createList() {
+            const rawText = document.getElementById('text-input').value.trim();
+            if (!rawText) {
+                alert("Please write at least one item!");
+                return;
+            }
+
+            const lines = rawText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+
+            lines.forEach((line, index) => {
+                const row = document.createElement('div');
+                row.className = 'item-row';
+                row.innerHTML = `
+                    <div class="item-left">
+                        <input type="checkbox" id="item-${index}" checked>
+                        <label for="item-${index}">${line}</label>
+                    </div>
+                    <div class="price-container">
+                        <span>Rs.</span>
+                        <input type="number" class="price-input" value="0" min="0" placeholder="0">
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            // Hide input card and show list + bill button
+            document.getElementById('input-card').style.display = 'none';
+            document.getElementById('list-card').style.display = 'block';
+            document.getElementById('btn-generate').style.display = 'block';
+        }
+
+        // Return back to text input to make changes
+        function showInputCard() {
+            document.getElementById('input-card').style.display = 'block';
+        }
+
+        // Collect selected items and trigger print/PDF dialog
+        function generateBill() {
+            const rows = document.querySelectorAll('.item-row');
+            const receiptBody = document.getElementById('receipt-body');
+            receiptBody.innerHTML = '';
+
+            let total = 0;
+            let count = 0;
+
+            rows.forEach(row => {
+                const isChecked = row.querySelector('input[type="checkbox"]').checked;
+                if (isChecked) {
+                    const itemName = row.querySelector('label').innerText;
+                    const priceValue = parseFloat(row.querySelector('.price-input').value) || 0;
+
+                    total += priceValue;
+                    count++;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${itemName}</td>
+                        <td>Rs. ${priceValue.toFixed(2)}</td>
+                    `;
+                    receiptBody.appendChild(tr);
                 }
-            )
+            });
 
-    def generate_pdf_invoice(self):
-        """Generates a PDF document with ReportLab."""
-        selected_items = []
-        total_amount = 0.0
+            if (count === 0) {
+                alert("No items selected!");
+                return;
+            }
 
-        for item in self.items_data:
-            if item["selected"].get():
-                try:
-                    price = float(item["price_entry"].get().strip())
-                except ValueError:
-                    price = 0.0
+            document.getElementById('receipt-date').innerText = "Date: " + currentDateStr;
+            document.getElementById('receipt-total-price').innerText = "Rs. " + total.toFixed(2);
 
-                selected_items.append((item["name"], f"Rs. {price:.2f}"))
-                total_amount += price
-
-        if not selected_items:
-            messagebox.showinfo("Notice", "No items selected to create a PDF!")
-            return
-
-        # Target Path in Android Download Folder
-        download_dir = "/sdcard/Download"
-        if not os.path.exists(download_dir):
-            download_dir = os.getcwd()
-
-        filename = (
-            f"Invoice_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        )
-        pdf_path = os.path.join(download_dir, filename)
-
-        try:
-            # Build Professional PDF Layout
-            doc = SimpleDocTemplate(
-                pdf_path,
-                pagesize=A4,
-                rightMargin=30,
-                leftMargin=30,
-                topMargin=30,
-                bottomMargin=30,
-            )
-            story = []
-
-            styles = getSampleStyleSheet()
-            title_style = ParagraphStyle(
-                "TitleStyle",
-                parent=styles["Heading1"],
-                fontName="Helvetica-Bold",
-                fontSize=22,
-                textColor=colors.HexColor("#1e293b"),
-                spaceAfter=6,
-            )
-            meta_style = ParagraphStyle(
-                "MetaStyle",
-                parent=styles["Normal"],
-                fontName="Helvetica",
-                fontSize=10,
-                textColor=colors.HexColor("#64748b"),
-                spaceAfter=15,
-            )
-
-            # Header Section
-            story.append(Paragraph("OFFICIAL INVOICE / RECEIPT", title_style))
-            story.append(
-                Paragraph(
-                    f"<b>Date:</b> {self.date_str} &nbsp;&nbsp;|&nbsp;&nbsp; <b>Invoice ID:</b> #INV-{datetime.datetime.now().strftime('%M%S')}",
-                    meta_style,
-                )
-            )
-            story.append(Spacer(1, 10))
-
-            # Table Content
-            table_data = [["Item Description", "Price (INR)"]]
-            for name, price_str in selected_items:
-                table_data.append([name, price_str])
-
-            table_data.append(["TOTAL AMOUNT", f"Rs. {total_amount:.2f}"])
-
-            # Styling the Table
-            invoice_table = Table(table_data, colWidths=[350, 150])
-            invoice_table.setStyle(
-                TableStyle(
-                    [
-                        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
-                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                        ("FONTSIZE", (0, 0), (-1, 0), 12),
-                        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
-                        (
-                            "BACKGROUND",
-                            (0, 1),
-                            (-1, -2),
-                            colors.HexColor("#f8fafc"),
-                        ),
-                        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e1")),
-                        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
-                        ("FONTSIZE", (0, -1), (-1, -1), 12),
-                        (
-                            "BACKGROUND",
-                            (0, -1),
-                            (-1, -1),
-                            colors.HexColor("#10b981"),
-                        ),
-                        ("TEXTCOLOR", (0, -1), (-1, -1), colors.white),
-                        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-                    ]
-                )
-            )
-
-            story.append(invoice_table)
-            doc.build(story)
-
-            messagebox.showinfo(
-                "PDF Created!", f"Your PDF bill was saved to:\n\n{pdf_path}"
-            )
-
-        except Exception as e:
-            messagebox.showerror(
-                "PDF Generation Error", f"Could not create PDF:\n{str(e)}"
-            )
-
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = PDFShoppingApp(root)
-    root.mainloop()
+            // Trigger system browser print (Save as PDF)
+            window.print();
+        }
+    </script>
+</body>
+</html>

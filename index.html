@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Shopping List & Bill Generator</title>
+    <!-- Beautiful Bengali Font (Hind Siliguri) Integration -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         /* Modern Dark Theme Styling */
         * {
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Hind Siliguri', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
         }
@@ -193,22 +198,23 @@
             display: none;
             background: #ffffff;
             color: #0f172a;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 400px;
+            padding: 15px;
+            width: 80mm; /* Standard Thermal Roll Width */
             margin: 20px auto;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
 
         .receipt-header-container {
             text-align: center;
             margin-bottom: 12px;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 1px dashed #000;
             padding-bottom: 10px;
         }
 
         #receipt-logo {
-            max-height: 65px;
-            max-width: 180px;
+            max-height: 60px;
+            max-width: 160px;
             margin-bottom: 6px;
             display: none;
             margin-left: auto;
@@ -216,35 +222,43 @@
         }
 
         #printable-receipt h2 {
-            font-size: 20px;
+            font-size: 18px;
             text-transform: uppercase;
+            font-weight: bold;
         }
 
         .receipt-address {
             font-size: 12px;
-            color: #475569;
+            color: #333;
             margin-top: 2px;
         }
 
         .receipt-meta {
             display: flex;
             justify-content: space-between;
-            font-size: 12px;
-            color: #64748b;
-            margin-bottom: 12px;
+            font-size: 11px;
+            color: #333;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 6px;
         }
 
         .receipt-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .receipt-table th, .receipt-table td {
-            padding: 8px 0;
+            padding: 5px 0;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
-            font-size: 14px;
+            font-size: 12px;
+        }
+
+        .receipt-table th {
+            border-bottom: 1px dashed #000;
+            text-transform: uppercase;
         }
 
         .receipt-table th:last-child, .receipt-table td:last-child {
@@ -255,14 +269,30 @@
             display: flex;
             justify-content: space-between;
             font-weight: bold;
-            font-size: 16px;
-            border-top: 2px solid #0f172a;
-            padding-top: 10px;
+            font-size: 14px;
+            border-top: 1px dashed #000;
+            border-bottom: 2px solid #000;
+            padding: 6px 0;
+            margin-top: 5px;
             color: #10b981;
+        }
+
+        .receipt-footer {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #000;
         }
 
         /* Media Query for Browser Printing */
         @media print {
+            @page {
+                size: 80mm auto; /* Fixed Thermal Roll Size */
+                margin: 0;
+            }
             body * {
                 visibility: hidden;
             }
@@ -272,9 +302,13 @@
             #printable-receipt {
                 display: block !important;
                 position: absolute;
-                left: 0;
+                left: 50%;
                 top: 0;
-                width: 100%;
+                transform: translateX(-50%);
+                width: 80mm;
+                padding: 10px;
+                border: none;
+                box-shadow: none;
             }
         }
     </style>
@@ -350,6 +384,9 @@
             <div class="receipt-total">
                 <span>TOTAL AMOUNT:</span>
                 <span id="receipt-total-price">Rs. 0.00</span>
+            </div>
+            <div class="receipt-footer">
+                *** THANK YOU ***
             </div>
         </div>
     </div>

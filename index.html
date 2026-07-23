@@ -79,7 +79,7 @@
             color: #94a3b8;
         }
 
-        /* Input Area & Shop Name Field */
+        /* Input Area & Fields */
         input[type="text"] {
             width: 100%;
             background-color: #020617;
@@ -87,8 +87,8 @@
             border: 1px solid #334155;
             border-radius: 8px;
             padding: 10px;
-            font-size: 15px;
-            margin-bottom: 12px;
+            font-size: 14px;
+            margin-bottom: 10px;
             outline: none;
         }
 
@@ -199,19 +199,39 @@
             margin: 20px auto;
         }
 
-        #printable-receipt h2 {
+        .receipt-header-container {
             text-align: center;
-            font-size: 20px;
-            text-transform: uppercase;
+            margin-bottom: 12px;
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 10px;
         }
 
-        #printable-receipt .receipt-date {
-            text-align: center;
+        #receipt-logo {
+            max-height: 65px;
+            max-width: 180px;
+            margin-bottom: 6px;
+            display: none;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #printable-receipt h2 {
+            font-size: 20px;
+            text-transform: uppercase;
+        }
+
+        .receipt-address {
+            font-size: 12px;
+            color: #475569;
+            margin-top: 2px;
+        }
+
+        .receipt-meta {
+            display: flex;
+            justify-content: space-between;
             font-size: 12px;
             color: #64748b;
-            margin: 8px 0 16px 0;
+            margin-bottom: 12px;
         }
 
         .receipt-table {
@@ -271,11 +291,21 @@
         <!-- Section 1: Input Box Card -->
         <div class="card" id="input-card">
             <div class="card-header">
-                <span class="card-title">1. Enter Details (Shop Name & Items)</span>
+                <span class="card-title">1. Enter Details & Items</span>
                 <button class="btn-link" onclick="clearInput()">Clear</button>
             </div>
+            
+            <!-- Logo URL Input -->
+            <input type="text" id="logo-url-input" placeholder="লোগোর ছবি সংক্রান্ত লিঙ্ক (Image URL)">
+            
             <!-- Shop Name Input Field -->
             <input type="text" id="shop-name-input" placeholder="দোকানের নাম লিখুন (e.g. জনতা স্টোর)">
+            
+            <!-- Shop Address Input Field -->
+            <input type="text" id="shop-address-input" placeholder="ঠিকানা (ডিফল্ট: বসির হাট, উত্তর ২৪ পরগণা)">
+            
+            <!-- Customer Name / Mobile Input Field -->
+            <input type="text" id="customer-info-input" placeholder="কাস্টমারের নাম বা মোবাইল নং">
             
             <textarea id="text-input" placeholder="চাল (৫ কেজি)&#10;দুধ (১ লিটার)&#10;ডিম (১২ টি)"></textarea>
             <button class="btn-primary" onclick="createList()">Create List &rarr;</button>
@@ -297,8 +327,17 @@
 
         <!-- Hidden Invoice Rendered for Printing -->
         <div id="printable-receipt">
-            <h2 id="receipt-shop-name">Official Receipt</h2>
-            <div class="receipt-date" id="receipt-date"></div>
+            <div class="receipt-header-container">
+                <img id="receipt-logo" src="" alt="Shop Logo">
+                <h2 id="receipt-shop-name">Official Receipt</h2>
+                <div class="receipt-address" id="receipt-shop-address">বসির হাট, উত্তর ২৪ পরগণা</div>
+            </div>
+
+            <div class="receipt-meta">
+                <span id="receipt-customer-info">Customer: N/A</span>
+                <span id="receipt-date"></span>
+            </div>
+
             <table class="receipt-table">
                 <thead>
                     <tr>
@@ -328,7 +367,10 @@
         const currentDateStr = updateDateTime();
 
         function clearInput() {
+            document.getElementById('logo-url-input').value = '';
             document.getElementById('shop-name-input').value = '';
+            document.getElementById('shop-address-input').value = '';
+            document.getElementById('customer-info-input').value = '';
             document.getElementById('text-input').value = '';
         }
 
@@ -403,11 +445,30 @@
                 return;
             }
 
-            // Set Manual Shop Name or Default Title
+            // Set Logo if URL is provided
+            const logoUrl = document.getElementById('logo-url-input').value.trim();
+            const logoImg = document.getElementById('receipt-logo');
+            if (logoUrl) {
+                logoImg.src = logoUrl;
+                logoImg.style.display = 'block';
+            } else {
+                logoImg.style.display = 'none';
+                logoImg.src = '';
+            }
+
+            // Set Shop Name
             const shopName = document.getElementById('shop-name-input').value.trim();
             document.getElementById('receipt-shop-name').innerText = shopName ? shopName : "Official Receipt";
 
-            document.getElementById('receipt-date').innerText = "Date: " + currentDateStr;
+            // Set Address (Fallback to default)
+            const shopAddress = document.getElementById('shop-address-input').value.trim();
+            document.getElementById('receipt-shop-address').innerText = shopAddress ? shopAddress : "বসির হাট, উত্তর ২৪ পরগণা";
+
+            // Set Customer Info
+            const customerInfo = document.getElementById('customer-info-input').value.trim();
+            document.getElementById('receipt-customer-info').innerText = customerInfo ? "Cust: " + customerInfo : "Cust: Cash Sale";
+
+            document.getElementById('receipt-date').innerText = currentDateStr;
             document.getElementById('receipt-total-price').innerText = "Rs. " + total.toFixed(2);
 
             // Trigger system browser print (Save as PDF)

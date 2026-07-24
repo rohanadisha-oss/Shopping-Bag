@@ -356,7 +356,7 @@
 
         <!-- Generate Bill Button -->
         <button class="btn-primary btn-success" id="btn-generate" style="display: none;" onclick="generateBill()">
-            Generate & Download PDF Bill
+            Generate & Save Bill
         </button>
 
         <!-- Hidden Invoice Rendered for Printing -->
@@ -392,6 +392,9 @@
     </div>
 
     <script>
+        // *** আপনার Google Apps Script Web App URL টি নিচে বসান ***
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx-G0C3rPdP2ScRUQ6vcDBwyCEUZX1FjltXKhZ5vBqX__kKMaiBTal8VEZ9utetJ1w/exec";
+
         // Set Auto Date and Time
         function updateDateTime() {
             const now = new Date();
@@ -450,6 +453,26 @@
             document.getElementById('input-card').style.display = 'block';
         }
 
+        // Save data to Google Sheet
+        function saveToGoogleSheet(shopName, customerInfo, itemsSummary, total) {
+            if (GOOGLE_SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") return;
+
+            const payload = {
+                date: currentDateStr,
+                shopName: shopName || "Official Receipt",
+                customerInfo: customerInfo || "Cash Sale",
+                items: itemsSummary,
+                totalPrice: "Rs. " + total.toFixed(2)
+            };
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            }).catch(err => console.error("Error saving to sheet:", err));
+        }
+
         // Collect selected items and trigger print/PDF dialog
         function generateBill() {
             const rows = document.querySelectorAll('.item-row');
@@ -458,6 +481,7 @@
 
             let total = 0;
             let count = 0;
+            let itemsList = [];
 
             rows.forEach(row => {
                 const isChecked = row.querySelector('input[type="checkbox"]').checked;
@@ -467,6 +491,7 @@
 
                     total += priceValue;
                     count++;
+                    itemsList.push(itemName + " (Rs. " + priceValue + ")");
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -497,7 +522,7 @@
             const shopName = document.getElementById('shop-name-input').value.trim();
             document.getElementById('receipt-shop-name').innerText = shopName ? shopName : "Official Receipt";
 
-            // Set Address (Fallback to default)
+            // Set Address
             const shopAddress = document.getElementById('shop-address-input').value.trim();
             document.getElementById('receipt-shop-address').innerText = shopAddress ? shopAddress : "বসির হাট, উত্তর ২৪ পরগণা";
 
@@ -507,6 +532,9 @@
 
             document.getElementById('receipt-date').innerText = currentDateStr;
             document.getElementById('receipt-total-price').innerText = "Rs. " + total.toFixed(2);
+
+            // Google Sheet-এ সেভ করা
+            saveToGoogleSheet(shopName, customerInfo, itemsList.join(", "), total);
 
             // Trigger system browser print (Save as PDF)
             window.print();
